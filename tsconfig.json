@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": ["dom", "dom.iterable", "esnext", "es2018.promise"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -15,6 +15,12 @@
     "jsx": "preserve",
     "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "styles/GlobalStyles.js"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "styles/GlobalStyles.js",
+    "firebase.config.js"
+  ],
   "exclude": ["node_modules"]
 }

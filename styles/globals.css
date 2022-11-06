@@ -1,3 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+* {
+  font-family: 'Rubik';
+  -webkit-tap-highlight-color: transparent;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  scroll-behavior: smooth;
+  color: #000957;
+  background-color: #fffaf5;
+}
+
+::-webkit-resizer {
+}
+
+/* .h-screen {
+  height: calc(100vh - 84px);
+  height: calc((var(--vh, 1vh) * 100) - 84px);
+} */
