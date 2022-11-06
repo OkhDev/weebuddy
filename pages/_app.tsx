@@ -4,6 +4,7 @@ import type { AppProps } from 'next/app'
 import '../styles/globals.css'
 import GlobalStyles from '../styles/GlobalStyles'
 import Navbar from '../components/Navbar'
+import { RecoilRoot } from 'recoil'
 
 function MyApp({
   Component,
@@ -11,9 +12,11 @@ function MyApp({
 }: AppProps<{ session: Session }>) {
   return (
     <SessionProvider session={session}>
-      <Navbar />
-      <GlobalStyles />
-      <Component {...pageProps} />
+      <RecoilRoot>
+        <Navbar />
+        <GlobalStyles />
+        <Component {...pageProps} />
+      </RecoilRoot>
     </SessionProvider>
   )
 }

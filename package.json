@@ -26,6 +26,7 @@
     "react-icons": "^4.6.0",
     "react-responsive": "^9.0.0",
     "react-scroll": "^1.8.8",
+    "recoil": "^0.7.6",
     "styled-components": "^5.3.6",
     "vercel": "^28.4.11"
   },

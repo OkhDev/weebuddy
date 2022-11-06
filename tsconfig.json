@@ -20,7 +20,7 @@
     "**/*.ts",
     "**/*.tsx",
     "styles/GlobalStyles.js",
-    "firebase.config.js"
+    "firebase.config.ts"
   ],
   "exclude": ["node_modules"]
 }

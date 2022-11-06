@@ -1,11 +1,9 @@
 import { IoSearch } from 'react-icons/io5'
+import { useRecoilState } from 'recoil'
+import { modalSearchQuery } from '../atoms/modalAtom'
 
-interface ISearchBar {
-  searchQuery: string
-  setSearchQuery: (e: string) => void
-}
-
-function SearchBar({ setSearchQuery, searchQuery }: ISearchBar) {
+function SearchBar() {
+  const [searchQuery, setSearchQuery] = useRecoilState(modalSearchQuery)
   return (
     <div className="w-full px-6 mx-auto my-8 md:px-12 md:w-2/3 ">
       <form className="flex items-center flex-1 max-w-2xl px-5 py-4 bg-white rounded-md border-orange-lightest drop-shadow-sm ">

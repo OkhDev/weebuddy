@@ -1,20 +1,24 @@
 import { motion } from 'framer-motion'
 import { useRef, useState } from 'react'
 import { RiCloseCircleFill } from 'react-icons/ri'
-
-interface IModalInputs {
-  title: string
-  body?: string
-  image?: null | string
-}
-
-interface IUpdateLogModal extends IModalInputs {
-  updateModalInputs: IModalInputs
-  setUpdateModalInputs: (e: IModalInputs) => void
-  updateImageLog: (e: any) => void
-  updateLog: (e: React.MouseEvent) => void
-  cancelUpdateLog: (e: React.MouseEvent) => void
-}
+import { useRecoilState, useRecoilValue } from 'recoil'
+import {
+  modalInputs,
+  modalImage,
+  modalLoading,
+  modalUpdateModal,
+  modalAllLogs,
+} from '../../atoms/modalAtom'
+import toast, { Toaster } from 'react-hot-toast'
+import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { db, storage } from '../../firebase.config'
+import { modalLogIndex } from '../../atoms/modalAtom'
+import {
+  ref,
+  deleteObject,
+  getDownloadURL,
+  uploadBytes,
+} from 'firebase/storage'
 
 const ImageHover = {
   close: {
@@ -31,16 +35,102 @@ const ImageHover = {
   },
 }
 
-export default function Modal({
-  updateModalInputs,
-  setUpdateModalInputs,
-  updateImageLog,
-  updateLog,
-  cancelUpdateLog,
-}: IUpdateLogModal) {
+interface IUser {
+  sessionUserId: string | undefined
+  supportedFileTypes: Array<string>
+}
+
+export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [allLogs, setAllLogs] = useRecoilState(modalAllLogs)
+  const [inputs, setInputs] = useRecoilState(modalInputs)
+  const [loading, setLoading] = useRecoilState(modalLoading)
+  const [imageFile, setImageFile] = useRecoilState(modalImage)
+  const [isUpdateModal, setIsUpdateModal] = useRecoilState(modalUpdateModal)
+  const logIndex = useRecoilValue(modalLogIndex)
+
   const [imageHover, setImageHover] = useState<boolean>(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
-  const titleInput: number = updateModalInputs.title.replace(/ /g, '').length
+  const titleInput: number = inputs.title.replace(/ /g, '').length
+
+  const addImageToLog = (e: any) => {
+    const reader: FileReader = new FileReader()
+    const image = e.target.files[0]
+    setImageFile(image)
+    const imageSize: number = image.size
+    const imageType: string = image.type
+
+    if (imageSize > 10485760) {
+      toast.error('File size too large.')
+      setInputs({ ...inputs, image: null })
+      return
+    }
+    if (supportedFileTypes.indexOf(imageType) === -1) {
+      toast.error('File type is not allowed.')
+      setInputs({ ...inputs, image: null })
+      return
+    }
+    if (image && imageSize <= 10485760) {
+      reader.readAsDataURL(image)
+      reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
+        const imageSrc = readerEvent.target?.result as string
+        setInputs({ ...inputs, image: imageSrc })
+      }
+    }
+  }
+
+  console.log(isUpdateModal)
+  const updateLog = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (loading) toast.error('Update in progress.', { id: 'update' })
+
+    setLoading(true)
+    setIsUpdateModal(false)
+
+    toast.loading('Updating...', { id: 'update' })
+
+    await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
+      title: inputs.title,
+      body: inputs.body,
+      updatedAt: serverTimestamp(),
+    })
+
+    const imageRef = ref(
+      storage,
+      `${sessionUserId}/${allLogs[logIndex].id}/image`
+    )
+    if (inputs.image !== null) {
+      toast.loading('Updating image...', { id: 'update' })
+      const checkOldImage = allLogs[logIndex].resultData.image
+      if (checkOldImage !== null) await deleteObject(imageRef)
+
+      uploadBytes(imageRef, imageFile).then(async () => {
+        const downloadURL = await getDownloadURL(imageRef)
+        await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
+          image: downloadURL,
+        })
+      })
+    }
+
+    if (inputs.image === null) {
+      await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
+        image: null,
+      })
+    }
+
+    setLoading(false)
+    toast.success('Updated!', { id: 'update' })
+  }
+
+  const cancelUpdateLog = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsUpdateModal(false)
+    setInputs({
+      title: '',
+      body: '',
+      image: null,
+    })
+  }
 
   const chooseImage = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -49,12 +139,13 @@ export default function Modal({
 
   const removeImage = (e: React.MouseEvent) => {
     e.preventDefault()
-    setUpdateModalInputs({ ...updateModalInputs, image: null })
+    setInputs({ ...inputs, image: null })
     setImageHover(false)
   }
 
   return (
     <>
+      <Toaster />
       <div className="fixed inset-0 z-50 flex items-center justify-center mx-4 overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
         <div className="relative flex flex-col w-full max-w-3xl gap-6 px-8 py-10 mx-auto bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none md:gap-8 md:px-12">
           <form className="relative flex flex-col justify-center w-full gap-8 bg-white rounded-xl min-h-max">
@@ -66,10 +157,10 @@ export default function Modal({
                 type="text"
                 required
                 autoFocus
-                value={updateModalInputs.title}
+                value={inputs.title}
                 onChange={(e) =>
-                  setUpdateModalInputs({
-                    ...updateModalInputs,
+                  setInputs({
+                    ...inputs,
                     title: e.target.value,
                   })
                 }
@@ -81,10 +172,10 @@ export default function Modal({
               <textarea
                 rows={4}
                 wrap="soft"
-                value={updateModalInputs.body}
+                value={inputs.body}
                 onChange={(e) =>
-                  setUpdateModalInputs({
-                    ...updateModalInputs,
+                  setInputs({
+                    ...inputs,
                     body: e.target.value,
                   })
                 }
@@ -93,7 +184,7 @@ export default function Modal({
             </div>
             <div className="relative flex flex-col gap-2 md:flex-row md:gap-0">
               <p className="font-bold basis-1/5">Image</p>
-              {updateModalInputs.image === null ? (
+              {inputs.image === null ? (
                 <div className="items-center flex flex-col md:flex-row gap-6 w-full ml-0 md:ml-6">
                   <button
                     onClick={chooseImage}
@@ -104,7 +195,7 @@ export default function Modal({
                   <input
                     ref={imageInputRef}
                     type="file"
-                    onChange={updateImageLog}
+                    onChange={addImageToLog}
                     className="hidden"
                   />
                   <small>PNG, JPG, JPEG, or HEIC &mdash; (10 MB max)</small>
@@ -127,7 +218,7 @@ export default function Modal({
                     </span>
                   </motion.div>
                   <img
-                    src={updateModalInputs.image}
+                    src={inputs.image}
                     alt="newly selected image"
                     className="w-full max-h-96"
                   />

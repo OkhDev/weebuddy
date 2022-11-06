@@ -7,27 +7,22 @@ import {
 } from 'firebase/firestore'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { motion } from 'framer-motion'
-import { Session } from 'next-auth'
 import { useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import { RiCloseCircleFill } from 'react-icons/ri'
-import { db, storage } from '../firebase.config'
+import { useRecoilState } from 'recoil'
+import {
+  modalImage,
+  modalInputs,
+  modalLoading,
+  modalNewLog,
+} from '../../atoms/modalAtom'
+import { db, storage } from '../../firebase.config'
 
-interface IInputs {
-  title: string
-  body?: string
-  image?: null | string
-}
-
-interface INewLog extends IInputs {
-  inputs: IInputs
-  setInputs: (e: IInputs) => void
-  setIsNewLog: (e: boolean) => void
-  imageFile: any
-  setImageFile: (e: any) => void
+interface INewLog {
   sessionUserId: string | undefined
   sessionName: string | undefined
-  sessionSSR: Session | null
+  supportedFileTypes: Array<string>
 }
 
 const ImageHover = {
@@ -46,28 +41,21 @@ const ImageHover = {
 }
 
 const NewLog = ({
-  inputs,
-  setInputs,
-  setIsNewLog,
-  imageFile,
-  setImageFile,
   sessionUserId,
   sessionName,
-  sessionSSR,
+  supportedFileTypes,
 }: INewLog): JSX.Element => {
-  const [loading, setLoading] = useState<boolean>(false)
+  const [inputs, setInputs] = useRecoilState(modalInputs)
+  const [, setIsNewLog] = useRecoilState(modalNewLog)
+  const [loading, setLoading] = useRecoilState(modalLoading)
+  const [imageFile, setImageFile] = useRecoilState(modalImage)
+
   const [imageHover, setImageHover] = useState<boolean>(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const titleInput: number = inputs.title.replace(/ /g, '').length
 
   const addImageToLog = (e: any) => {
     const reader: FileReader = new FileReader()
-    const supportedFileTypes = [
-      'image/png',
-      'image/jpeg',
-      'image/jpg',
-      'image/heic',
-    ]
     const image = e.target.files[0]
     setImageFile(image)
     const imageSize: number = image.size
@@ -94,7 +82,7 @@ const NewLog = ({
 
   const uploadLog = async (e: React.MouseEvent) => {
     e.preventDefault()
-    if (loading) return
+    if (loading) toast.error('Upload in progress.', { id: 'loading' })
 
     setLoading(true)
     setIsNewLog(false)
@@ -106,7 +94,6 @@ const NewLog = ({
         title: inputs.title,
         body: inputs.body,
         image: null,
-        profileImg: sessionSSR?.user?.image,
         timestamp: serverTimestamp(),
       })
 
