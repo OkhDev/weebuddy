@@ -46,7 +46,7 @@ export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
   const [inputs, setInputs] = useRecoilState(modalInputs)
   const [loading, setLoading] = useRecoilState(modalLoading)
   const [imageFile, setImageFile] = useRecoilState(modalImage)
-  const [isUpdateModal, setIsUpdateModal] = useRecoilState(modalUpdateModal)
+  const [, setIsUpdateModal] = useRecoilState(modalUpdateModal)
   const logIndex = useRecoilValue(modalLogIndex)
 
   const [imageHover, setImageHover] = useState<boolean>(false)
@@ -79,7 +79,6 @@ export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
     }
   }
 
-  console.log(isUpdateModal)
   const updateLog = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (loading) toast.error('Update in progress.', { id: 'update' })
@@ -148,7 +147,7 @@ export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
       <Toaster />
       <div className="fixed inset-0 z-50 flex items-center justify-center mx-4 overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
         <div className="relative flex flex-col w-full max-w-3xl gap-6 px-8 py-10 mx-auto bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none md:gap-8 md:px-12">
-          <form className="relative flex flex-col justify-center w-full gap-8 bg-white rounded-xl min-h-max">
+          <div className="relative flex flex-col justify-center w-full gap-8 bg-white rounded-xl min-h-max">
             <h4 className="text-xl font-bold md:text-2xl">Update Log</h4>
             <hr className="border-1 border-navy-light/30" />
             <div className="flex flex-col gap-2 md:flex-row md:gap-0">
@@ -225,7 +224,7 @@ export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
                 </motion.div>
               )}
             </div>
-          </form>
+          </div>
           <div className="flex items-center justify-center md:justify-end gap-4 md:gap-6">
             <button
               disabled={titleInput <= 5}

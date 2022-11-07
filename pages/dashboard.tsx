@@ -20,7 +20,7 @@ import {
 } from '../atoms/modalAtom'
 import Logs from '../components/Logs/Log'
 import NewLog from '../components/Logs/NewLog'
-import NewLogButton from '../components/Logs/NewLogButton'
+import NewLogButton from '../components/Logs/NewLogButtons'
 import UpdateLogModal from '../components/Logs/UpdateLog'
 import SearchBar from '../components/SearchBar'
 import { db } from '../firebase.config'

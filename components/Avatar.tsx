@@ -7,7 +7,7 @@ type Props = {
   navbar?: boolean
 }
 
-function Avatar({ small, large, navbar }: Props) {
+const Avatar = ({ small, large, navbar }: Props): JSX.Element => {
   const { data: session } = useSession()
 
   return (
