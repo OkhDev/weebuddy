@@ -1,6 +1,4 @@
-import React from 'react'
-
-function Hero() {
+const Hero = (): JSX.Element => {
   return (
     <div className="flex flex-col items-center justify-center w-screen min-h-screen">
       Home

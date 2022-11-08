@@ -14,6 +14,7 @@ import {
 import { storage, db } from '../../firebase.config'
 import { modalLogIndex } from '../../atoms/modalAtom'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 
 interface ILogs {
   index: number
@@ -22,7 +23,6 @@ interface ILogs {
   image?: string
   timestamp: any
   updatedAt?: any
-  sessionUserId: string | undefined
 }
 
 const LogPosts = ({
@@ -32,8 +32,9 @@ const LogPosts = ({
   updatedAt,
   body,
   image,
-  sessionUserId,
 }: ILogs): JSX.Element => {
+  const { data: session } = useSession()
+  const sessionUserId = session?.user?.id
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [allLogs, setAllLogs] = useRecoilState(modalAllLogs)
   const [loading, setLoading] = useRecoilState(modalLoading)
@@ -99,14 +100,18 @@ const LogPosts = ({
     toast.loading('Deleting...', { id: 'delete' })
 
     const deleteLogId: string = allLogs[index].id
-    const logImageRef = ref(storage, `${sessionUserId}/${deleteLogId}/image`)
-    const checkImage = allLogs[index].resultData.image
+    try {
+      const logImageRef = ref(storage, `${sessionUserId}/${deleteLogId}/image`)
+      const checkImage = allLogs[index].resultData.image
 
-    if (checkImage !== null) await deleteObject(logImageRef)
-    await deleteDoc(doc(db, `${sessionUserId}`, deleteLogId))
+      if (checkImage !== null) await deleteObject(logImageRef)
+      await deleteDoc(doc(db, `${sessionUserId}`, deleteLogId))
 
-    setLoading(false)
-    toast.success('Deleted', { id: 'delete' })
+      setLoading(false)
+      toast.success('Deleted', { id: 'delete' })
+    } catch (e) {
+      toast.error(`Error occurred.\n${e}`, { id: 'delete' })
+    }
   }
 
   const triggerEdit = () => {

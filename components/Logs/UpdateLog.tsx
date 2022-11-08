@@ -13,6 +13,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db, storage } from '../../firebase.config'
 import { modalLogIndex } from '../../atoms/modalAtom'
+import { useSession } from 'next-auth/react'
 import {
   ref,
   deleteObject,
@@ -36,11 +37,12 @@ const ImageHover = {
 }
 
 interface IUser {
-  sessionUserId: string | undefined
   supportedFileTypes: Array<string>
 }
 
-export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
+export default function Modal({ supportedFileTypes }: IUser) {
+  const { data: session } = useSession()
+  const sessionUserId = session?.user?.id
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [allLogs, setAllLogs] = useRecoilState(modalAllLogs)
   const [inputs, setInputs] = useRecoilState(modalInputs)
@@ -51,11 +53,11 @@ export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
 
   const [imageHover, setImageHover] = useState<boolean>(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
-  const titleInput: number = inputs.title.replace(/ /g, '').length
+  const titleInput: number = inputs.title.replace(/\s/g, '').length
 
   const addImageToLog = (e: any) => {
     const reader: FileReader = new FileReader()
-    const image = e.target.files[0]
+    const image = e.target?.files[0]
     setImageFile(image)
     const imageSize: number = image.size
     const imageType: string = image.type
@@ -70,12 +72,16 @@ export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
       setInputs({ ...inputs, image: null })
       return
     }
-    if (image && imageSize <= 10485760) {
-      reader.readAsDataURL(image)
-      reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
-        const imageSrc = readerEvent.target?.result as string
-        setInputs({ ...inputs, image: imageSrc })
+    try {
+      if (image && imageSize <= 10485760) {
+        reader.readAsDataURL(image)
+        reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
+          const imageSrc = readerEvent.target?.result as string
+          setInputs({ ...inputs, image: imageSrc })
+        }
       }
+    } catch (e) {
+      toast.error(`Error occurred.\n${e}`, { id: 'update' })
     }
   }
 
@@ -87,38 +93,41 @@ export default function Modal({ sessionUserId, supportedFileTypes }: IUser) {
     setIsUpdateModal(false)
 
     toast.loading('Updating...', { id: 'update' })
-
-    await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
-      title: inputs.title,
-      body: inputs.body,
-      updatedAt: serverTimestamp(),
-    })
-
-    const imageRef = ref(
-      storage,
-      `${sessionUserId}/${allLogs[logIndex].id}/image`
-    )
-    if (inputs.image !== null) {
-      toast.loading('Updating image...', { id: 'update' })
-      const checkOldImage = allLogs[logIndex].resultData.image
-      if (checkOldImage !== null) await deleteObject(imageRef)
-
-      uploadBytes(imageRef, imageFile).then(async () => {
-        const downloadURL = await getDownloadURL(imageRef)
-        await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
-          image: downloadURL,
-        })
-      })
-    }
-
-    if (inputs.image === null) {
+    try {
       await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
-        image: null,
+        title: inputs.title,
+        body: inputs.body,
+        updatedAt: serverTimestamp(),
       })
-    }
 
-    setLoading(false)
-    toast.success('Updated!', { id: 'update' })
+      const imageRef = ref(
+        storage,
+        `${sessionUserId}/${allLogs[logIndex].id}/image`
+      )
+      if (inputs.image !== null) {
+        toast.loading('Updating image...', { id: 'update' })
+        const checkOldImage = allLogs[logIndex].resultData.image
+        if (checkOldImage !== null) await deleteObject(imageRef)
+
+        uploadBytes(imageRef, imageFile).then(async () => {
+          const downloadURL = await getDownloadURL(imageRef)
+          await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
+            image: downloadURL,
+          })
+        })
+      }
+
+      if (inputs.image === null) {
+        await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
+          image: null,
+        })
+      }
+
+      setLoading(false)
+      toast.success('Updated!', { id: 'update' })
+    } catch (e) {
+      toast.error(`Error occurred.\n${e}`, { id: 'update' })
+    }
   }
 
   const cancelUpdateLog = (e: React.MouseEvent) => {

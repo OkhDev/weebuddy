@@ -18,10 +18,9 @@ import {
   modalNewLog,
 } from '../../atoms/modalAtom'
 import { db, storage } from '../../firebase.config'
+import { useSession } from 'next-auth/react'
 
 interface INewLog {
-  sessionUserId: string | undefined
-  sessionName: string | undefined
   supportedFileTypes: Array<string>
 }
 
@@ -40,11 +39,10 @@ const ImageHover = {
   },
 }
 
-const NewLog = ({
-  sessionUserId,
-  sessionName,
-  supportedFileTypes,
-}: INewLog): JSX.Element => {
+const NewLog = ({ supportedFileTypes }: INewLog): JSX.Element => {
+  const { data: session } = useSession()
+  const sessionName = session?.user?.name?.split(' ')[0]
+  const sessionUserId = session?.user?.id
   const [inputs, setInputs] = useRecoilState(modalInputs)
   const [, setIsNewLog] = useRecoilState(modalNewLog)
   const [loading, setLoading] = useRecoilState(modalLoading)
@@ -52,11 +50,11 @@ const NewLog = ({
 
   const [imageHover, setImageHover] = useState<boolean>(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
-  const titleInput: number = inputs.title.replace(/ /g, '').length
+  const titleInput: number = inputs.title.replace(/\s /g, '').length
 
   const addImageToLog = (e: any) => {
     const reader: FileReader = new FileReader()
-    const image = e.target.files[0]
+    const image = e.target?.files[0]
     setImageFile(image)
     const imageSize: number = image.size
     const imageType: string = image.type
@@ -71,12 +69,16 @@ const NewLog = ({
       setInputs({ ...inputs, image: null })
       return
     }
-    if (image && imageSize <= 10485760) {
-      reader.readAsDataURL(image)
-      reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
-        const imageSrc = readerEvent.target?.result as string
-        setInputs({ ...inputs, image: imageSrc })
+    try {
+      if (image && imageSize <= 10485760) {
+        reader.readAsDataURL(image)
+        reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
+          const imageSrc = readerEvent.target?.result as string
+          setInputs({ ...inputs, image: imageSrc })
+        }
       }
+    } catch (e) {
+      toast.error(`Error occurred.\n${e}`, { id: 'loading' })
     }
   }
 
@@ -115,9 +117,8 @@ const NewLog = ({
       })
       toast.success('Complete!', { id: 'loading' })
     } catch (e) {
-      console.log('Error is: ', e)
       setLoading(false)
-      toast.error('Error occurred.', { id: 'loading' })
+      toast.error(`Error occurred.\n${e}`, { id: 'loading' })
     }
   }
 
