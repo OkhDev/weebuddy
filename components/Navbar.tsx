@@ -36,16 +36,16 @@ const Navbar = (): JSX.Element => {
   // const isMobile = useMediaQuery({ maxWidth: deviceSize.mobile })
 
   const handleSignOut = async () => {
-    try {
-      const data = await signOut({ redirect: false, callbackUrl: '/' })
-      router.push(data.url)
-    } catch (e) {
-      toast.error(`Error occurred.\n${e}`)
-    }
+    const data = await signOut({ redirect: false, callbackUrl: '/' })
+    router.push(data.url).catch((e) => toast.error(`Error occurred.\n${e}`))
   }
 
   const handleSignIn = async () => {
     router.push('/auth/signin')
+  }
+
+  const handleDashboard = () => {
+    router.push('/dashboard')
   }
 
   return (
@@ -76,10 +76,7 @@ const Navbar = (): JSX.Element => {
                     !hover && 'pointer-events-none'
                   } absolute right-0 z-50 flex flex-col items-center justify-center gap-6 text-center p-10 bg-white rounded-md top-16 drop-shadow-sm`}
                 >
-                  <p
-                    onClick={() => router.push('/dashboard')}
-                    className="cursor-pointer"
-                  >
+                  <p onClick={handleDashboard} className="cursor-pointer">
                     Dashboard
                   </p>
 

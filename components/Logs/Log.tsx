@@ -11,7 +11,7 @@ import {
   modalInputs,
   modalNewLog,
 } from '../../atoms/modalAtom'
-import { storage, db } from '../../firebase.config'
+import { storage, db } from '../../lib/firebase.config'
 import { modalLogIndex } from '../../atoms/modalAtom'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'

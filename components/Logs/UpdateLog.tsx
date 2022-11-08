@@ -11,7 +11,7 @@ import {
 } from '../../atoms/modalAtom'
 import toast, { Toaster } from 'react-hot-toast'
 import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
-import { db, storage } from '../../firebase.config'
+import { db, storage } from '../../lib/firebase.config'
 import { modalLogIndex } from '../../atoms/modalAtom'
 import { useSession } from 'next-auth/react'
 import {
