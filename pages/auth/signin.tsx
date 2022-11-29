@@ -1,6 +1,7 @@
 import { signIn } from 'next-auth/react'
 import { FcGoogle } from 'react-icons/fc'
 import { FaGithub } from 'react-icons/fa'
+import Head from 'next/head'
 
 const signin = () => {
   const allProviders = [
@@ -18,7 +19,14 @@ const signin = () => {
 
   return (
     <>
-      <section className="flex flex-col items-start flex-1 w-full m-auto min-h-[calc(100vh-2rem)] max-w-7xl">
+      <Head>
+        <title>Sign In</title>
+        <meta
+          name="description"
+          content="WeeBuddy sign in page to get access to using the web application to store logs."
+        />
+      </Head>
+      <section className="flex flex-col fixed inset-0 items-start flex-1 w-full m-auto max-h-[90vh] max-w-7xl">
         <div className="flex flex-col justify-center m-auto bg-white rounded-2xl w-80 h-80 drop-shadow-sm">
           <p className="text-bold text-3xl md:text-4xl font-bold text-center pb-12">
             Sign In
@@ -29,6 +37,7 @@ const signin = () => {
               return (
                 <div key={index}>
                   <button
+                    aria-label="sign in"
                     className="inline-flex items-center w-max px-5 py-3 rounded-lg bg-slate-100 gap-4"
                     onClick={() => signIn(id, { callbackUrl: '/dashboard' })}
                   >

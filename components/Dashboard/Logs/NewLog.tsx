@@ -7,6 +7,7 @@ import {
 } from 'firebase/firestore'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { motion } from 'framer-motion'
+import { useSession } from 'next-auth/react'
 import { useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import { RiCloseCircleFill } from 'react-icons/ri'
@@ -16,13 +17,9 @@ import {
   modalInputs,
   modalLoading,
   modalNewLog,
-} from '../../atoms/modalAtom'
-import { db, storage } from '../../lib/firebase.config'
-import { useSession } from 'next-auth/react'
-
-interface INewLog {
-  supportedFileTypes: Array<string>
-}
+} from '../../../atoms/modalAtom'
+import { supportedFileTypes } from '../../../constants'
+import { db, storage } from '../../../lib/firebase.config'
 
 const ImageHover = {
   close: {
@@ -39,7 +36,7 @@ const ImageHover = {
   },
 }
 
-const NewLog = ({ supportedFileTypes }: INewLog): JSX.Element => {
+const NewLog = (): JSX.Element => {
   const { data: session } = useSession()
   const sessionName = session?.user?.name?.split(' ')[0]
   const sessionUserId = session?.user?.id
@@ -102,10 +99,12 @@ const NewLog = ({ supportedFileTypes }: INewLog): JSX.Element => {
       if (inputs.image !== null) {
         const logImageRef = ref(storage, `${sessionUserId}/${docRef.id}/image`)
         uploadBytes(logImageRef, imageFile).then(async () => {
-          const downloadURL = await getDownloadURL(logImageRef)
+          const downloadURL = await getDownloadURL(logImageRef).catch((e) =>
+            toast.error(`Error occurred.\n${e}`)
+          )
           await updateDoc(doc(db, `${sessionUserId}`, docRef.id), {
             image: downloadURL,
-          })
+          }).catch((e) => toast.error(`Error occurred.\n${e}`))
         })
       }
 
@@ -150,7 +149,9 @@ const NewLog = ({ supportedFileTypes }: INewLog): JSX.Element => {
         <h4 className="text-xl font-bold md:text-2xl">New Log</h4>
         <hr className="border-1 border-navy-light/30" />
         <div className="flex flex-col gap-2 md:flex-row md:gap-0">
-          <p className="font-bold basis-1/5">Title</p>
+          <p className="basis-1/5 flex-col flex">
+            <span className="font-bold">Title *</span>
+          </p>
           <input
             type="text"
             autoFocus
@@ -175,6 +176,7 @@ const NewLog = ({ supportedFileTypes }: INewLog): JSX.Element => {
           {inputs.image === null ? (
             <div className="items-center flex flex-col md:flex-row gap-6 w-full ml-0 md:ml-10">
               <button
+                aria-label="choose image"
                 onClick={chooseImage}
                 className="bg-orange-lightest w-max px-6 py-2.5 font-medium text-orange rounded-full select-none outline-none focus:outline-none text-sm"
               >
@@ -216,6 +218,7 @@ const NewLog = ({ supportedFileTypes }: INewLog): JSX.Element => {
 
         <div className="flex items-center justify-center md:justify-end gap-6 mt-4">
           <button
+            aria-label="create log"
             disabled={titleInput <= 5}
             className={`${
               titleInput <= 5
@@ -227,6 +230,7 @@ const NewLog = ({ supportedFileTypes }: INewLog): JSX.Element => {
             Create Log
           </button>
           <button
+            aria-label="cancel"
             className="w-32 px-4 py-2 text-sm font-medium uppercase border-2 rounded-md outline-none select-none border-orange text-orange focus:outline-none"
             onClick={cancelLog}
           >

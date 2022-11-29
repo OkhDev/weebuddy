@@ -1,25 +1,26 @@
+import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from 'firebase/storage'
 import { motion } from 'framer-motion'
+import { useSession } from 'next-auth/react'
 import { useRef, useState } from 'react'
+import toast, { Toaster } from 'react-hot-toast'
 import { RiCloseCircleFill } from 'react-icons/ri'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
-  modalInputs,
-  modalImage,
-  modalLoading,
-  modalUpdateModal,
   modalAllLogs,
-} from '../../atoms/modalAtom'
-import toast, { Toaster } from 'react-hot-toast'
-import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
-import { db, storage } from '../../lib/firebase.config'
-import { modalLogIndex } from '../../atoms/modalAtom'
-import { useSession } from 'next-auth/react'
-import {
-  ref,
-  deleteObject,
-  getDownloadURL,
-  uploadBytes,
-} from 'firebase/storage'
+  modalImage,
+  modalInputs,
+  modalLoading,
+  modalLogIndex,
+  modalUpdateModal,
+} from '../../../atoms/modalAtom'
+import { supportedFileTypes } from '../../../constants'
+import { db, storage } from '../../../lib/firebase.config'
 
 const ImageHover = {
   close: {
@@ -36,11 +37,7 @@ const ImageHover = {
   },
 }
 
-interface IUser {
-  supportedFileTypes: Array<string>
-}
-
-export default function Modal({ supportedFileTypes }: IUser) {
+export default function Modal() {
   const { data: session } = useSession()
   const sessionUserId = session?.user?.id
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -98,7 +95,7 @@ export default function Modal({ supportedFileTypes }: IUser) {
         title: inputs.title,
         body: inputs.body,
         updatedAt: serverTimestamp(),
-      })
+      }).catch((e) => toast.error(`Error occurred.\n${e}`))
 
       const imageRef = ref(
         storage,
@@ -107,20 +104,25 @@ export default function Modal({ supportedFileTypes }: IUser) {
       if (inputs.image !== null) {
         toast.loading('Updating image...', { id: 'update' })
         const checkOldImage = allLogs[logIndex].resultData.image
-        if (checkOldImage !== null) await deleteObject(imageRef)
+        if (checkOldImage !== null)
+          await deleteObject(imageRef).catch((e) =>
+            toast.error(`Error occurred.\n${e}`)
+          )
 
         uploadBytes(imageRef, imageFile).then(async () => {
-          const downloadURL = await getDownloadURL(imageRef)
+          const downloadURL = await getDownloadURL(imageRef).catch((e) =>
+            toast.error(`Error occurred.\n${e}`)
+          )
           await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
             image: downloadURL,
-          })
+          }).catch((e) => toast.error(`Error occurred.\n${e}`))
         })
       }
 
       if (inputs.image === null) {
         await updateDoc(doc(db, `${sessionUserId}`, allLogs[logIndex].id), {
           image: null,
-        })
+        }).catch((e) => toast.error(`Error occurred.\n${e}`))
       }
 
       setLoading(false)
@@ -195,6 +197,7 @@ export default function Modal({ supportedFileTypes }: IUser) {
               {inputs.image === null ? (
                 <div className="items-center flex flex-col md:flex-row gap-6 w-full ml-0 md:ml-6">
                   <button
+                    aria-label="choose image"
                     onClick={chooseImage}
                     className="bg-orange-lightest w-max px-6 py-2.5 font-medium text-orange rounded-full select-none outline-none focus:outline-none text-sm"
                   >
@@ -236,6 +239,7 @@ export default function Modal({ supportedFileTypes }: IUser) {
           </div>
           <div className="flex items-center justify-center md:justify-end gap-4 md:gap-6">
             <button
+              aria-label="update"
               disabled={titleInput <= 5}
               className={`${
                 titleInput <= 5
@@ -248,6 +252,7 @@ export default function Modal({ supportedFileTypes }: IUser) {
               Update
             </button>
             <button
+              aria-label="cancel"
               className="px-4 py-2 text-sm font-bold uppercase border-2 rounded-md outline-none text-orange border-orange focus:outline-none select-none"
               type="button"
               onClick={cancelUpdateLog}

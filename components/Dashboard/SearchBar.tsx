@@ -1,6 +1,6 @@
 import { IoSearch } from 'react-icons/io5'
 import { useRecoilState } from 'recoil'
-import { modalSearchQuery } from '../atoms/modalAtom'
+import { modalSearchQuery } from '../../atoms/modalAtom'
 
 function SearchBar() {
   const [searchQuery, setSearchQuery] = useRecoilState(modalSearchQuery)
@@ -15,7 +15,7 @@ function SearchBar() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <button type="submit" hidden />
+        <button aria-label="search bar" type="submit" hidden />
       </form>
     </div>
   )

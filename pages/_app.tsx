@@ -1,10 +1,18 @@
+import '@fontsource/rubik/300.css'
+import '@fontsource/rubik/400.css'
+import '@fontsource/rubik/500.css'
+import '@fontsource/rubik/700.css'
+import '@fontsource/rubik/800.css'
 import { Session } from 'next-auth'
 import { SessionProvider } from 'next-auth/react'
 import type { AppProps } from 'next/app'
-import '../styles/globals.css'
-import GlobalStyles from '../styles/GlobalStyles'
-import Navbar from '../components/Navbar'
+import dynamic from 'next/dynamic'
 import { RecoilRoot } from 'recoil'
+import '../styles/globals.css'
+
+const DynamicNavbar = dynamic(() => import('../components/Navbar/Navbar'), {
+  ssr: true,
+})
 
 function MyApp({
   Component,
@@ -13,8 +21,7 @@ function MyApp({
   return (
     <SessionProvider session={session}>
       <RecoilRoot>
-        <Navbar />
-        <GlobalStyles />
+        <DynamicNavbar />
         <Component {...pageProps} />
       </RecoilRoot>
     </SessionProvider>

@@ -1,11 +1,22 @@
 import type { NextPage } from 'next'
-import Hero from '../components/Hero'
+import Head from 'next/head'
+import Footer from '../components/Footer'
+import Hero from '../components/Home/Hero'
 
 const Home: NextPage = () => {
   return (
-    <div className="max-w-7xl">
+    <>
+      <Head>
+        <title>WeeBuddy</title>
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
+        <meta
+          name="description"
+          content="WeeBuddy is a web application that stores wee logs for when your pet goes for a bathroom break."
+        />
+      </Head>
       <Hero />
-    </div>
+      <Footer />
+    </>
   )
 }
 

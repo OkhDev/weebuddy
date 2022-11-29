@@ -1,6 +1,6 @@
 import { BsThreeDots } from 'react-icons/bs'
 import { HiCalendar, HiClock } from 'react-icons/hi'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { deleteDoc, doc } from 'firebase/firestore'
 import { ref, deleteObject } from 'firebase/storage'
 import { useRecoilState } from 'recoil'
@@ -10,9 +10,9 @@ import {
   modalUpdateModal,
   modalInputs,
   modalNewLog,
-} from '../../atoms/modalAtom'
-import { storage, db } from '../../lib/firebase.config'
-import { modalLogIndex } from '../../atoms/modalAtom'
+} from '../../../atoms/modalAtom'
+import { storage, db } from '../../../lib/firebase.config'
+import { modalLogIndex } from '../../../atoms/modalAtom'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 
@@ -100,18 +100,20 @@ const LogPosts = ({
     toast.loading('Deleting...', { id: 'delete' })
 
     const deleteLogId: string = allLogs[index].id
-    try {
-      const logImageRef = ref(storage, `${sessionUserId}/${deleteLogId}/image`)
-      const checkImage = allLogs[index].resultData.image
 
-      if (checkImage !== null) await deleteObject(logImageRef)
-      await deleteDoc(doc(db, `${sessionUserId}`, deleteLogId))
+    const logImageRef = ref(storage, `${sessionUserId}/${deleteLogId}/image`)
+    const checkImage = allLogs[index].resultData.image
 
-      setLoading(false)
-      toast.success('Deleted', { id: 'delete' })
-    } catch (e) {
-      toast.error(`Error occurred.\n${e}`, { id: 'delete' })
-    }
+    if (checkImage !== null)
+      await deleteObject(logImageRef).catch((e) =>
+        toast.error(`Error occurred.\n${e}`)
+      )
+    await deleteDoc(doc(db, `${sessionUserId}`, deleteLogId)).catch((e) =>
+      toast.error(`Error occurred.\n${e}`)
+    )
+
+    setLoading(false)
+    toast.success('Deleted', { id: 'delete' })
   }
 
   const triggerEdit = () => {
@@ -121,7 +123,6 @@ const LogPosts = ({
 
   return (
     <>
-      <Toaster />
       <div className="relative flex flex-col w-full gap-6 p-10 bg-white md:p-14 md:gap-8 rounded-xl min-h-max drop-shadow-sm">
         <div className="flex flex-col justify-between md:flex-row">
           <div className="relative flex flex-col gap-6">
@@ -130,10 +131,12 @@ const LogPosts = ({
             </h4>
             <div className="flex flex-col md:flex-row gap-3 md:gap-6 text-navy-light">
               <p className="inline-flex items-center gap-2">
-                <HiCalendar size={16} /> {createdDay}
+                <HiCalendar size={16} />{' '}
+                {createdDay !== 'Invalid Date' ? createdDay : 'Loading...'}
               </p>
               <p className="inline-flex items-center gap-2">
-                <HiClock size={16} /> {createdTime}
+                <HiClock size={16} />{' '}
+                {createdTime !== 'Invalid Date' ? createdTime : 'Loading...'}
               </p>
               {updatedAt && (
                 <p className="inline-flex items-start flex-wrap">
@@ -149,8 +152,11 @@ const LogPosts = ({
               )}
             </div>
           </div>
-          <div className="z-50 fixed top-8 right-8 md:top-14 md:right-14">
-            <span className="cursor-pointer select-none" onClick={triggerEdit}>
+          <div className="z-50">
+            <span
+              className="absolute top-8 right-8 md:top-14 md:right-14 cursor-pointer select-none"
+              onClick={triggerEdit}
+            >
               <BsThreeDots size={24} />
             </span>
 
@@ -158,12 +164,14 @@ const LogPosts = ({
               <>
                 <div className="absolute -right-4 top-10 flex flex-row-reverse gap-10 select-none bg-slate-50 rounded-md p-6 w-max drop-shadow-sm">
                   <button
+                    aria-label="update"
                     className="w-32 px-4 py-2 text-sm font-medium uppercase rounded-md outline-none select-none text-white bg-blue-400 focus:outline-none"
                     onClick={updateLog}
                   >
                     Update
                   </button>
                   <button
+                    aria-label="delete"
                     className="w-32 px-4 py-2 text-sm font-medium uppercase rounded-md outline-none select-none text-white bg-red-500 focus:outline-none"
                     onClick={deleteLog}
                   >
